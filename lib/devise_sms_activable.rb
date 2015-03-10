@@ -13,14 +13,19 @@ module Devise
   @@sms_confirm_within = 2.days
   mattr_accessor :sms_confirmation_keys
   @@sms_confirmation_keys = [:email]
-  
+
+  mattr_accessor :sms_sender_class
+  @@sms_sender_class = "Devise::SmsSender"
+
+
   # Get the sms sender class from the mailer reference object.
   def self.sms_sender
-    @@sms_sender_ref.get
+    @@sms_sender_ref.get(@@sms_sender_class)
   end
 
   # Set the smser reference object to access the smser.
   def self.sms_sender=(class_name)
+    @@sms_sender_class = class_name
     @@sms_sender_ref = ActiveSupport::Dependencies.reference(class_name)
   end
   

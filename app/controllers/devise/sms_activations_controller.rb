@@ -9,11 +9,11 @@ class Devise::SmsActivationsController < DeviseController
   # POST /resource/sms_activation
   def create
     self.resource = resource_class.send_sms_token(params[resource_name])
-    
     if resource.errors.empty?
       set_flash_message :notice, :send_token, :phone => self.resource.phone
       redirect_to new_session_path(resource_name)
     else
+      set_flash_message(:error, :already_confirmed) if self.resource.confirmed_sms?
       render :new
     end
   end
@@ -25,11 +25,10 @@ class Devise::SmsActivationsController < DeviseController
   
   # GET or POST /resource/sms_activation/consume?sms_token=abcdef
   def consume
-    self.resource = resource_class.confirm_by_sms_token(params[:sms_token])
-
+    self.resource = resource_class.confirm_by_sms_token(params[:sms_token] || params[resource_name][:sms_token])
     if resource.errors.empty?
-      set_flash_message :notice, :confirmed
-      sign_in_and_redirect(resource_name, resource)
+      set_flash_message(:notice, :confirmed)
+      respond_with_navigational(resource){ redirect_to after_confirmation_path_for(resource_name, resource) }
     else
       render :new
     end
@@ -40,5 +39,14 @@ class Devise::SmsActivationsController < DeviseController
     def build_resource(hash = nil)
       self.resource = resource_class.new
     end
+
+  # The path used after confirmation.
+  def after_confirmation_path_for(resource_name, resource)
+    if signed_in?(resource_name)
+      signed_in_root_path(resource)
+    else
+      new_session_path(resource_name)
+    end
+  end
 
 end
