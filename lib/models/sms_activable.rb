@@ -77,7 +77,7 @@ module Devise
 
       # The message to be shown if the account is inactive.
       def inactive_message
-        !confirmed_sms? ? :unconfirmed_sms : super
+        (sms_confirmation_required? and !confirmed_sms?) ? :unconfirmed_sms : super
       end
 
       # If you don't want confirmation to be sent on create, neither a code
@@ -165,7 +165,7 @@ module Devise
 
           def generate_small_token(column)
             loop do
-              token = Devise.friendly_token[0,5].upcase
+              token = Devise.friendly_token[0,5].upcase.gsub(/[0-9A-Za-z]/, '')
               break token unless to_adapter.find_first({ column => token })
             end
           end
